@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+ <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+ 	<property name="location">
+ 		<value>classpath:salesforceconfig.properties</value>
+ 	</property>
+ </bean>
+ <bean id="salesforce" class="org.apache.camel.component.salesforce.SalesforceComponent">
+ 	<property name="loginConfig">
+ 		<bean class="org.apache.camel.component.salesforce.SalesforceLoginConfig">
+ 			<property name="loginUrl" value="${loginUrl}"/>
+ 			<property name="userName" value="${userName}"/>
+ 			<property name="password" value="${password}"/>
+ 			<property name="clientId" value="${clientId}"/>
+ 			<property name="clientSecret" value="${clientSecret}"/>
+ 		</bean>
+ 	</property>
+ 	<property name="config">
+ 		<bean class="org.apache.camel.component.salesforce.SalesforceEndpointConfig">
+ 			<property name="sObjectName" value="${sObjectName}"/>
+ 			<property name="sObjectClass" value="${sObjectClass}"/>
+ 		</bean>
+ 	</property>
+ 	<property name="packages" value="${sObjectDTOPackages}"/>
+ </bean> 
+  <camelContext id="context-e7c8040e-3d43-466c-b27b-7301c38705fc" xmlns="http://camel.apache.org/schema/spring">
+  <propertyPlaceholder location="classpath:twitter.properties" id="twitter"/>
+  <route id="toSFDC">
+    <from uri="twitter://search?type=direct&amp;keywords=%23SFDC_ACME_TOOLING&amp;consumerKey={{consumerKey}}&amp;consumerSecret={{consumerSecret}}&amp;accessToken={{accessToken}}&amp;accessTokenSecret={{accessTokenSecret}}"/>
+    <log message="${body.source} ==&gt;  ${body}"/>
+    <to uri="salesforce:query?sObjectQuery=Select Id, Name, Phone, Twitter_Hashtag__c From Account Where Twitter_Hashtag__c='SFDC_ACME_TOOLS'" id="toSFDCQuery">
+      <description>:operationName:query?sObjectQuery=Select Id, Name, Phone, Twitter_Hashtag__c Where Twitter_Hashtag__c='SFDC_ACME_TOOLS'
+etSObjectWithId?sObjectName=Account&amp;sObjectIdName=Twitter_Hashtag__c&amp;sObjectIdValue=Twitter_Hashtag__c</description>
+    </to>
+    <convertBodyTo type="java.lang.String" id="convertBodyToString"/>
+    <log message="Salesforce:${body}" id="logSFDC"/>
+  </route>
+</camelContext>
+
+</beans>
